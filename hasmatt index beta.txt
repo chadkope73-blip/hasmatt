@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>HasMatt | Nearby Danger Awareness</title>
+<meta name="description" content="If there is a danger nearby, this app will let you know. Live hazard awareness using weather alerts, earthquakes, Superfund sites, and current wildfire perimeters.">
+<meta name="theme-color" content="#0f1416">
+
+<link rel="icon" href="logo.png">
+<script defer src="/_vercel/insights/script.js"></script>
+
+<style>
+:root{
+--bg1:#0b1220;
+--bg2:#13233f;
+--card:rgba(20,32,51,.82);
+--line:#2a3d63;
+--text:#e8eefc;
+--muted:#a9b7d3;
+--accent:#8dd3ff;
+--accent2:#ffd98a;
+--good:#65d98f;
+--maybe:#ffd166;
+--bad:#ff8a80;
+--panel:#0d1727;
+}
+
+*{box-sizing:border-box;}
+
+body{
+font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+background:
+linear-gradient(rgba(11,18,32,.45),rgba(11,18,32,.55)),
+url("/topo-bg.jpg");
+background-size:cover;
+background-position:center;
+background-attachment:fixed;
+color:var(--text);
+text-align:center;
+margin:0;
+padding:20px;
+min-height:100vh;
+}
+
+.navgenie-link{
+position:fixed;
+top:16px;
+right:16px;
+z-index:1000;
+}
+
+.navgenie-link a{
+background:#0f1b2e;
+color:#f2d8a7;
+padding:8px 14px;
+border-radius:10px;
+text-decoration:none;
+font-weight:600;
+border:1px solid rgba(255,255,255,.15);
+box-shadow:0 6px 16px rgba(0,0,0,.35);
+display:inline-block;
+}
+
+.navgenie-link a:hover{
+filter:brightness(1.05);
+}
+
+.container{
+max-width:980px;
+margin:auto;
+}
+
+.hero{
+background:var(--card);
+padding:25px;
+border-radius:24px;
+border:1px solid var(--line);
+backdrop-filter:blur(8px);
+box-shadow:0 16px 40px rgba(0,0,0,.25);
+margin-bottom:20px;
+}
+
+.logo{
+max-width:180px;
+margin-bottom:20px;
+filter:drop-shadow(0 6px 10px rgba(0,0,0,.35));
+}
+
+.eyebrow{
+font-size:.85rem;
+color:var(--accent2);
+text-transform:uppercase;
+letter-spacing:.05em;
+margin-bottom:8px;
+font-weight:700;
+}
+
+h1{
+color:var(--accent2);
+margin:0 0 10px;
+font-size:2rem;
+}
+
+.subtitle{
+color:var(--muted);
+line-height:1.5;
+margin:0 auto 18px;
+max-width:760px;
+}
+
+.card{
+background:var(--card);
+border:1px solid var(--line);
+border-radius:24px;
+padding:20px;
+backdrop-filter:blur(8px);
+box-shadow:0 16px 40px rgba(0,0,0,.18);
+text-align:left;
+margin-bottom:18px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+}
+
+.full{
+grid-column:1 / -1;
+}
+
+.button-row{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+}
+
+label{
+display:block;
+font-size:.9rem;
+color:var(--muted);
+margin:0 0 6px;
+text-align:left;
+}
+
+input,button{
+width:100%;
+padding:13px 14px;
+border-radius:14px;
+font-size:1rem;
+box-sizing:border-box;
+transition:transform .15s ease, filter .15s ease, box-shadow .15s ease;
+}
+
+input{
+background:var(--panel);
+color:var(--text);
+border:1px solid var(--line);
+}
+
+button{
+background:linear-gradient(180deg,var(--accent),#67b8f6);
+color:#07111f;
+font-weight:700;
+cursor:pointer;
+border:none;
+box-shadow:0 10px 24px rgba(103,184,246,.22);
+}
+
+button:hover{
+filter:brightness(1.05);
+transform:scale(1.01);
+}
+
+button.secondary{
+background:linear-gradient(180deg,#ffe7b2,#ffd98a);
+box-shadow:0 10px 24px rgba(255,217,138,.16);
+}
+
+.result{
+padding:18px;
+background:var(--panel);
+border:1px solid var(--line);
+border-radius:20px;
+text-align:left;
+line-height:1.6;
+color:var(--text);
+}
+
+.kpis{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:10px;
+margin-top:12px;
+}
+
+.kpi{
+border:1px solid var(--line);
+border-radius:16px;
+padding:12px;
+background:#101a2c;
+}
+
+.kpi .label{
+font-size:.82rem;
+color:var(--muted);
+margin-bottom:4px;
+}
+
+.kpi .value{
+font-size:1.05rem;
+font-weight:700;
+color:var(--text);
+}
+
+.good{color:var(--good);font-weight:800;}
+.maybe{color:var(--maybe);font-weight:800;}
+.bad{color:var(--bad);font-weight:800;}
+
+.small{
+color:var(--muted);
+font-size:.88rem;
+line-height:1.45;
+}
+
+.footer-note{
+margin-top:14px;
+color:var(--muted);
+font-size:.86rem;
+line-height:1.45;
+text-align:left;
+}
+
+.section-title{
+margin:16px 0 10px;
+font-size:1rem;
+color:var(--accent2);
+font-weight:700;
+}
+
+.alert-list{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+margin-top:12px;
+}
+
+.alert-card{
+border:1px solid var(--line);
+border-radius:16px;
+padding:12px;
+background:#101a2c;
+}
+
+.alert-card .name{
+font-weight:700;
+color:var(--text);
+margin-bottom:4px;
+}
+
+.alert-card .meta{
+color:var(--accent);
+font-size:.9rem;
+line-height:1.4;
+}
+
+.loading{
+display:inline-block;
+padding:8px 12px;
+border-radius:999px;
+border:1px solid var(--line);
+background:#0d1727;
+color:var(--accent2);
+font-size:.9rem;
+}
+
+.donate{
+margin-top:25px;
+text-align:center;
+}
+
+.donate-btn{
+display:inline-flex;
+align-items:center;
+gap:10px;
+padding:10px 16px;
+border:1px solid var(--accent2);
+border-radius:12px;
+background:#0e1a22;
+color:var(--accent2);
+text-decoration:none;
+font-weight:bold;
+}
+
+.donate-btn img{
+width:24px;
+height:24px;
+}
+
+.footer-nav{
+text-align:center;
+margin-top:30px;
+}
+
+.footer-nav a{
+display:inline-block;
+background:#0f1b2e;
+color:#f2d8a7;
+padding:10px 16px;
+border-radius:10px;
+text-decoration:none;
+font-weight:600;
+border:1px solid rgba(255,255,255,.15);
+box-shadow:0 6px 16px rgba(0,0,0,.35);
+}
+
+.footer-nav a:hover{
+filter:brightness(1.05);
+}
+
+.footer{
+margin-top:25px;
+font-size:14px;
+color:var(--muted);
+text-align:center;
+}
+
+.footer a{
+color:var(--accent2);
+text-decoration:none;
+}
+
+.footer a:hover{
+text-decoration:underline;
+}
+
+@media (max-width:840px){
+.grid,.button-row,.alert-list{grid-template-columns:1fr;}
+.kpis{grid-template-columns:1fr 1fr;}
+h1{font-size:1.75rem;}
+}
+</style>
+</head>
+
+<body>
+
+<div class="navgenie-link">
+<a href="https://navgenie.ittworks.com">🧭 Toolbelt</a>
+</div>
+
+<div class="container">
+
+<div class="hero">
+<img src="logo.png" class="logo" alt="In Tandem Toolworks logo">
+<div class="eyebrow">InTandem Toolworks</div>
+<h1>HasMatt</h1>
+<p class="subtitle">If there is a danger nearby, this app will let you know. Live hazard awareness for travelers, field workers, campers, and people who want a fast read on nearby risks before they settle in.</p>
+</div>
+
+<div class="card">
+<div class="grid">
+<div>
+<label for="zip">ZIP code</label>
+<input id="zip" placeholder="Colorado priority areas">
+</div>
+
+<div>
+<label for="lat">Latitude</label>
+<input id="lat" placeholder="Optional">
+</div>
+
+<div class="full">
+<label for="lon">Longitude</label>
+<input id="lon" placeholder="Optional">
+</div>
+
+<div class="full button-row">
+<button onclick="scanArea()">Scan Area</button>
+<button class="secondary" onclick="getLocation()">Use My Location</button>
+</div>
+</div>
+
+<div style="margin-top:18px;" id="output" class="result">
+<div class="small">Live scan sources: weather alerts, recent earthquakes, EPA Superfund sites, and current interagency wildfire perimeters.</div>
+</div>
+
+<div class="footer-note">This version is online-first and pulls live public hazard data when available. Always use judgment and follow official local guidance.</div>
+</div>
+
+<div class="donate">
+<p>Enjoying the tools? Support development.</p>
+<a class="donate-btn" href="https://donate.stripe.com/4gM3cv0kV4UJbzPfeDeAg00" target="_blank">
+<img src="ittw-donate.png" alt="Donation icon">
+Support InTandem Toolworks
+</a>
+<p style="font-size:13px;opacity:.7;">Thank you for the donation.</p>
+</div>
+
+<div class="footer-nav">
+<a href="https://navgenie.ittworks.com">Return to Toolbelt</a>
+</div>
+
+<div class="footer">
+Built by <b>In Tandem Toolworks</b>
+<br><br>
+<a href="mailto:support@ittworks.com">support@ittworks.com</a>
+<br><br>
+<a href="https://www.facebook.com/InTandemToolworks" target="_blank">Follow us on Facebook</a>
+</div>
+
+</div>
+
+<script>
+const zipLookup = {
+"80014": {lat:39.6671, lon:-104.8344, name:"Aurora"},
+"80021": {lat:39.8712, lon:-105.0972, name:"Broomfield"},
+"80112": {lat:39.5750, lon:-104.8760, name:"Centennial"},
+"80120": {lat:39.6130, lon:-104.9950, name:"Littleton"},
+"80126": {lat:39.5480, lon:-104.9690, name:"Highlands Ranch"},
+"80202": {lat:39.7525, lon:-104.9995, name:"Denver"},
+"80205": {lat:39.7600, lon:-104.9700, name:"Denver"},
+"80210": {lat:39.6780, lon:-104.9620, name:"Denver South"},
+"80227": {lat:39.6670, lon:-105.0940, name:"Lakewood"},
+"80301": {lat:40.0392, lon:-105.2519, name:"Boulder"},
+"80401": {lat:39.7555, lon:-105.2211, name:"Golden"},
+"80424": {lat:39.4817, lon:-106.0384, name:"Breckenridge"},
+"80435": {lat:39.6403, lon:-105.8716, name:"Dillon"},
+"80439": {lat:39.6333, lon:-105.3172, name:"Evergreen"},
+"80443": {lat:39.6275, lon:-106.0434, name:"Frisco"},
+"80452": {lat:39.7055, lon:-105.6997, name:"Idaho Springs"},
+"80487": {lat:40.4849, lon:-106.8317, name:"Steamboat Springs"},
+"80498": {lat:39.6466, lon:-106.0510, name:"Silverthorne"},
+"80524": {lat:40.5853, lon:-105.0439, name:"Fort Collins"},
+"80903": {lat:38.8339, lon:-104.8214, name:"Colorado Springs"},
+"81201": {lat:38.5347, lon:-106.1240, name:"Salida"},
+"81301": {lat:37.2753, lon:-107.8801, name:"Durango"},
+"81401": {lat:38.4783, lon:-107.8762, name:"Montrose"},
+"81432": {lat:38.0297, lon:-107.6714, name:"Ridgway"},
+"81435": {lat:37.9375, lon:-107.8123, name:"Telluride"},
+"81501": {lat:39.0639, lon:-108.5506, name:"Grand Junction"},
+"81601": {lat:39.5505, lon:-107.3248, name:"Glenwood Springs"},
+"81611": {lat:39.1911, lon:-106.8175, name:"Aspen"},
+"81620": {lat:39.5347, lon:-106.9378, name:"Edwards"},
+"81623": {lat:39.3914, lon:-107.2112, name:"Carbondale"},
+"81657": {lat:39.6403, lon:-106.3742, name:"Vail"}
+};
+
+function resolveLocation(){
+const zip=document.getElementById("zip").value.trim();
+if(zip && zipLookup[zip]) return {...zipLookup[zip], source:`ZIP ${zip}`};
+
+const lat=parseFloat(document.getElementById("lat").value);
+const lon=parseFloat(document.getElementById("lon").value);
+if(Number.isFinite(lat) && Number.isFinite(lon)) return {lat, lon, name:"Custom coordinates", source:"Lat/Lon"};
+
+return null;
+}
+
+function haversineMiles(lat1, lon1, lat2, lon2){
+const R = 3958.8;
+const toRad = deg => deg * Math.PI / 180;
+const dLat = toRad(lat2 - lat1);
+const dLon = toRad(lon2 - lon1);
+const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function daysAgoIso(days){
+const d = new Date();
+d.setUTCDate(d.getUTCDate() - days);
+return d.toISOString().slice(0, 10);
+}
+
+function formatMiles(n){
+return `${n.toFixed(1)} miles`;
+}
+
+function severityRank(text){
+const t = (text || "").toLowerCase();
+if(t.includes("extreme")) return 4;
+if(t.includes("severe")) return 3;
+if(t.includes("moderate")) return 2;
+if(t.includes("minor")) return 1;
+return 0;
+}
+
+async function fetchWeatherAlerts(lat, lon){
+const url = `https://api.weather.gov/alerts/active?point=${lat},${lon}`;
+const res = await fetch(url, { headers: { "Accept": "application/geo+json" } });
+if(!res.ok) throw new Error("Weather alerts unavailable");
+const data = await res.json();
+const features = Array.isArray(data.features) ? data.features : [];
+return features.map(f => ({
+type: "Weather Alert",
+name: f.properties?.event || "Alert",
+severity: f.properties?.severity || "Unknown",
+headline: f.properties?.headline || "",
+area: f.properties?.areaDesc || "",
+urgency: f.properties?.urgency || "",
+certainty: f.properties?.certainty || ""
+}));
+}
+
+async function fetchEarthquakes(lat, lon){
+const starttime = daysAgoIso(30);
+const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude=${lat}&longitude=${lon}&maxradiuskm=160&orderby=time&limit=20&starttime=${starttime}&minmagnitude=1`;
+const res = await fetch(url);
+if(!res.ok) throw new Error("Earthquake feed unavailable");
+const data = await res.json();
+const features = Array.isArray(data.features) ? data.features : [];
+return features.map(f => {
+const coords = f.geometry?.coordinates || [];
+const eqLon = coords[0];
+const eqLat = coords[1];
+return {
+type: "Earthquake",
+name: f.properties?.title || "Earthquake",
+mag: f.properties?.mag ?? null,
+time: f.properties?.time || null,
+distance: (Number.isFinite(eqLat) && Number.isFinite(eqLon)) ? haversineMiles(lat, lon, eqLat, eqLon) : null
+};
+}).sort((a,b) => (a.distance ?? 99999) - (b.distance ?? 99999));
+}
+
+async function fetchSuperfund(lat, lon){
+const url = `https://geopub.epa.gov/ArcGIS/rest/services/EMEF/efpoints/MapServer/0/query?f=json&geometry=${lon},${lat}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=50&units=esriSRUnit_StatuteMile&outFields=primary_name,location_address,city_name,state_code,postal_code,latitude,longitude&returnGeometry=true`;
+const res = await fetch(url);
+if(!res.ok) throw new Error("Superfund service unavailable");
+const data = await res.json();
+const features = Array.isArray(data.features) ? data.features : [];
+return features.map(f => {
+const attr = f.attributes || {};
+const gLat = f.geometry?.y ?? attr.latitude;
+const gLon = f.geometry?.x ?? attr.longitude;
+return {
+type: "Superfund",
+name: attr.primary_name || "Superfund site",
+address: [attr.location_address, attr.city_name, attr.state_code, attr.postal_code].filter(Boolean).join(", "),
+distance: (Number.isFinite(gLat) && Number.isFinite(gLon)) ? haversineMiles(lat, lon, gLat, gLon) : null
+};
+}).sort((a,b) => (a.distance ?? 99999) - (b.distance ?? 99999));
+}
+
+async function fetchFires(lat, lon){
+const url = `https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query?f=json&geometry=${lon},${lat}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=100&units=esriSRUnit_StatuteMile&outFields=poly_IncidentName,poly_GISAcres,attr_FireDiscoveryDateTime,attr_ContainmentDateTime,attr_IncidentTypeCategory,attr_IncidentShortDescription&returnGeometry=true`;
+const res = await fetch(url);
+if(!res.ok) throw new Error("Wildfire service unavailable");
+const data = await res.json();
+const features = Array.isArray(data.features) ? data.features : [];
+return features.map(f => {
+const attr = f.attributes || {};
+let distance = null;
+const rings = f.geometry?.rings || [];
+if(rings.length){
+let best = Infinity;
+for(const ring of rings){
+for(const pt of ring){
+const pLon = pt[0];
+const pLat = pt[1];
+const d = haversineMiles(lat, lon, pLat, pLon);
+if(d < best) best = d;
+}
+}
+distance = Number.isFinite(best) ? best : null;
+}
+return {
+type: "Wildfire",
+name: attr.poly_IncidentName || "Wildfire perimeter",
+acres: attr.poly_GISAcres || 0,
+category: attr.attr_IncidentTypeCategory || "",
+distance
+};
+}).sort((a,b) => (a.distance ?? 99999) - (b.distance ?? 99999));
+}
+
+function dangerAssessment(weather, quakes, superfund, fires){
+let score = 0;
+let reason = "No major live hazard source found nearby.";
+
+if(weather.length){
+const maxSeverity = Math.max(...weather.map(a => severityRank(a.severity)));
+if(maxSeverity >= 3){ score = Math.max(score, 95); reason = "Severe weather alert active nearby."; }
+else if(maxSeverity === 2){ score = Math.max(score, 75); reason = "Moderate weather alert active nearby."; }
+else { score = Math.max(score, 55); reason = "Minor weather alert active nearby."; }
+}
+
+if(fires.length && fires[0].distance != null){
+if(fires[0].distance <= 5){ score = Math.max(score, 92); reason = "Active wildfire perimeter very close."; }
+else if(fires[0].distance <= 25){ score = Math.max(score, 80); reason = "Active wildfire perimeter within day-use range."; }
+else if(fires[0].distance <= 50){ score = Math.max(score, 60); reason = "Active wildfire perimeter in the region."; }
+}
+
+if(superfund.length && superfund[0].distance != null){
+if(superfund[0].distance <= 1){ score = Math.max(score, 82); reason = "Superfund site extremely close."; }
+else if(superfund[0].distance <= 5){ score = Math.max(score, 65); reason = "Superfund site nearby."; }
+else if(superfund[0].distance <= 25){ score = Math.max(score, 45); reason = "Superfund site in the broader area."; }
+}
+
+if(quakes.length && quakes[0].distance != null){
+const q = quakes[0];
+if((q.mag ?? 0) >= 4 && q.distance <= 50){ score = Math.max(score, 55); reason = "Recent notable earthquake activity nearby."; }
+else if((q.mag ?? 0) >= 2.5 && q.distance <= 25){ score = Math.max(score, 35); reason = "Recent local earthquake activity detected."; }
+}
+
+if(score >= 85) return {label:"High Danger", cls:"bad", reason};
+if(score >= 55) return {label:"Use Caution", cls:"maybe", reason};
+return {label:"Low Immediate Danger", cls:"good", reason};
+}
+
+function renderCards(title, items, renderItem){
+if(!items.length) return `<div class="small">No ${title.toLowerCase()} found in the current search radius.</div>`;
+return `
+<div class="section-title">${title}</div>
+<div class="alert-list">
+${items.slice(0,6).map(renderItem).join("")}
+</div>`;
+}
+
+async function scanArea(){
+const loc = resolveLocation();
+const output = document.getElementById("output");
+
+if(!loc){
+output.innerHTML = '<div class="small">Enter a supported ZIP code, coordinates, or use your current location.</div>';
+return;
+}
+
+output.innerHTML = '<span class="loading">Scanning live sources…</span>';
+
+const [weatherRes, quakeRes, superfundRes, fireRes] = await Promise.allSettled([
+fetchWeatherAlerts(loc.lat, loc.lon),
+fetchEarthquakes(loc.lat, loc.lon),
+fetchSuperfund(loc.lat, loc.lon),
+fetchFires(loc.lat, loc.lon)
+]);
+
+const weather = weatherRes.status === "fulfilled" ? weatherRes.value : [];
+const quakes = quakeRes.status === "fulfilled" ? quakeRes.value : [];
+const superfund = superfundRes.status === "fulfilled" ? superfundRes.value : [];
+const fires = fireRes.status === "fulfilled" ? fireRes.value : [];
+
+const assessment = dangerAssessment(weather, quakes, superfund, fires);
+
+output.innerHTML = `
+<div class="small">Location source: <strong>${loc.source}</strong>${loc.name ? ` · ${loc.name}` : ""}</div>
+<div class="section-title">Area Summary</div>
+<div class="kpis">
+  <div class="kpi"><div class="label">Danger level</div><div class="value"><span class="${assessment.cls}">${assessment.label}</span></div></div>
+  <div class="kpi"><div class="label">Weather alerts</div><div class="value">${weather.length}</div></div>
+  <div class="kpi"><div class="label">Nearby earthquakes</div><div class="value">${quakes.length}</div></div>
+  <div class="kpi"><div class="label">Nearby wildfires</div><div class="value">${fires.length}</div></div>
+</div>
+<div class="footer-note"><strong>Why this matters:</strong> ${assessment.reason}</div>
+
+${renderCards("National Weather Service Alerts", weather, item => `
+<div class="alert-card">
+  <div class="name">${item.name}</div>
+  <div class="meta">${item.severity} · ${item.urgency || "Urgency unknown"}</div>
+  <div class="small">${item.headline || item.area || "Official weather alert active."}</div>
+</div>
+`)}
+
+${renderCards("Recent Earthquakes", quakes, item => `
+<div class="alert-card">
+  <div class="name">${item.name}</div>
+  <div class="meta">${item.distance != null ? formatMiles(item.distance) : "Distance unknown"}${item.mag != null ? ` · M ${item.mag}` : ""}</div>
+  <div class="small">${item.time ? new Date(item.time).toLocaleString() : "Recent seismic event."}</div>
+</div>
+`)}
+
+${renderCards("EPA Superfund Sites", superfund, item => `
+<div class="alert-card">
+  <div class="name">${item.name}</div>
+  <div class="meta">${item.distance != null ? formatMiles(item.distance) : "Distance unknown"}</div>
+  <div class="small">${item.address || "EPA-listed Superfund location."}</div>
+</div>
+`)}
+
+${renderCards("Current Wildfire Perimeters", fires, item => `
+<div class="alert-card">
+  <div class="name">${item.name}</div>
+  <div class="meta">${item.distance != null ? formatMiles(item.distance) : "Distance unknown"}${item.acres ? ` · ${Math.round(item.acres).toLocaleString()} acres` : ""}</div>
+  <div class="small">${item.category === "RX" ? "Prescribed fire perimeter" : "Wildfire perimeter"}.</div>
+</div>
+`)}
+
+<div class="section-title">Sources checked</div>
+<div class="small">National Weather Service alerts, USGS Earthquake Catalog, EPA Superfund, and NIFC current fire perimeters.</div>
+
+${weatherRes.status === "rejected" || quakeRes.status === "rejected" || superfundRes.status === "rejected" || fireRes.status === "rejected" ? `
+<div class="footer-note"><strong>Note:</strong> One or more live sources did not respond during this scan. The rest of the report still reflects the sources that did respond.</div>
+` : ""}
+`;
+}
+
+function getLocation(){
+if(!navigator.geolocation) return;
+
+navigator.geolocation.getCurrentPosition(
+pos => {
+document.getElementById("lat").value = pos.coords.latitude.toFixed(5);
+document.getElementById("lon").value = pos.coords.longitude.toFixed(5);
+},
+() => {
+document.getElementById("output").innerHTML = '<div class="small">Unable to read current location on this device.</div>';
+},
+{ enableHighAccuracy:true, timeout:10000, maximumAge:60000 }
+);
+}
+</script>
+
+</body>
+</html>
